@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMS Groups</string>
+    <string name="inbox_title">Conversations</string>
+    <string name="labels_title">Labels</string>
+    <string name="make_default">Make default SMS app</string>
+    <string name="new_label">New label</string>
+    <string name="add_number">Add number</string>
+    <string name="label_name_hint">Label name (e.g. School Notifications)</string>
+    <string name="number_hint">Phone number or short code</string>
+    <string name="send">Send</string>
+    <string name="message_hint">Message</string>
+    <string name="no_labels">No labels yet</string>
+</resources>
