@@ -108,14 +108,17 @@ class InboxActivity : AppCompatActivity() {
         if (!hasAllPermissions()) return
         lifecycleScope.launch {
             try {
-                val loaded = withContext(Dispatchers.IO) { repository.observeThreads() }
-                rows.clear()
-                rows += loaded
-                val labels = loaded.map { row ->
-                    val name = labelResolver.labelName(row.address)
-                        ?: contactResolver.displayName(row.address)
-                        ?: row.address
-                    "$name\n${row.snippet ?: ""}"
+                val labels = withContext(Dispatchers.IO) {
+                    val loaded = repository.observeThreads()
+                    val deduped = loaded.distinctBy { it.address }.take(MAX_ROWS)
+                    rows.clear()
+                    rows += deduped
+                    deduped.map { row ->
+                        val name = labelResolver.labelName(row.address)
+                            ?: contactResolver.displayName(row.address)
+                            ?: row.address
+                        "$name\n${row.snippet ?: ""}"
+                    }
                 }
                 binding.threadList.adapter =
                     ArrayAdapter(this@InboxActivity, android.R.layout.simple_list_item_2, android.R.id.text1, labels)
@@ -123,5 +126,9 @@ class InboxActivity : AppCompatActivity() {
                 binding.roleStatus.text = "Failed to load messages: ${e.javaClass.simpleName}"
             }
         }
+    }
+
+    private companion object {
+        const val MAX_ROWS = 200
     }
 }

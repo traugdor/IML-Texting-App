@@ -59,14 +59,16 @@ class ThreadActivity : AppCompatActivity() {
 
     private fun load() {
         lifecycleScope.launch {
-            val labelName = labelResolver.labelName(address)
-                ?: contactResolver.displayName(address)
-                ?: address
-            binding.threadTitle.text = labelName
-            val messages = withContext(Dispatchers.IO) { repository.messagesForAddress(address) }
-            val lines = messages.map { msg ->
-                (if (msg.isOutgoing) "Me: " else "") + msg.body
+            val (title, lines) = withContext(Dispatchers.IO) {
+                val name = labelResolver.labelName(address)
+                    ?: contactResolver.displayName(address)
+                    ?: address
+                val messages = repository.messagesForAddress(address)
+                name to messages.map { msg ->
+                    (if (msg.isOutgoing) "Me: " else "") + msg.body
+                }
             }
+            binding.threadTitle.text = title
             binding.messageList.adapter =
                 ArrayAdapter(this@ThreadActivity, android.R.layout.simple_list_item_1, lines)
         }
