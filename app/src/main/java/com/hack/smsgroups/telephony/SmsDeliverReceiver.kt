@@ -25,6 +25,8 @@ class SmsDeliverReceiver : BroadcastReceiver() {
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
         if (messages.isEmpty()) return
 
+        val subId = intent.getLongExtra(EXTRA_SUBSCRIPTION, -1L).toInt()
+
         val pending = goAsync()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         scope.launch {
@@ -34,7 +36,6 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                     if (address.isEmpty()) continue
                     val body = parts.joinToString(separator = "") { it.messageBody ?: "" }
                     val timestamp = parts.first().timestampMillis
-                    val subId = parts.first().subscriptionId
 
                     repository.writeIncoming(address, body, timestamp, subId)
                     notifier.notifyIncoming(address = address, body = body, timestamp = timestamp)
@@ -43,5 +44,9 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 pending.finish()
             }
         }
+    }
+
+    private companion object {
+        const val EXTRA_SUBSCRIPTION = "subscription"
     }
 }

@@ -34,56 +34,68 @@ class TelephonyRepository @Inject constructor(
 
     fun observeThreads(): List<ThreadSummary> {
         val out = mutableListOf<ThreadSummary>()
-        context.contentResolver.query(
-            smsUri,
-            arrayOf(
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.DATE
-            ),
-            null,
-            null,
-            "${Telephony.Sms.DATE} DESC"
-        )?.use { c -> collectThreads(c, out) }
+        try {
+            context.contentResolver.query(
+                smsUri,
+                arrayOf(
+                    Telephony.Sms.THREAD_ID,
+                    Telephony.Sms.ADDRESS,
+                    Telephony.Sms.BODY,
+                    Telephony.Sms.DATE
+                ),
+                null,
+                null,
+                "${Telephony.Sms.DATE} DESC"
+            )?.use { c -> collectThreads(c, out) }
+        } catch (e: SecurityException) {
+            return emptyList()
+        }
         return out
     }
 
     fun messagesForThread(threadId: Long): List<SmsMessageRow> {
         val out = mutableListOf<SmsMessageRow>()
-        context.contentResolver.query(
-            smsUri,
-            arrayOf(
-                Telephony.Sms._ID,
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.DATE,
-                Telephony.Sms.TYPE
-            ),
-            "${Telephony.Sms.THREAD_ID} = ?",
-            arrayOf(threadId.toString()),
-            "${Telephony.Sms.DATE} ASC"
-        )?.use { c -> collectMessages(c, out) }
+        try {
+            context.contentResolver.query(
+                smsUri,
+                arrayOf(
+                    Telephony.Sms._ID,
+                    Telephony.Sms.THREAD_ID,
+                    Telephony.Sms.ADDRESS,
+                    Telephony.Sms.BODY,
+                    Telephony.Sms.DATE,
+                    Telephony.Sms.TYPE
+                ),
+                "${Telephony.Sms.THREAD_ID} = ?",
+                arrayOf(threadId.toString()),
+                "${Telephony.Sms.DATE} ASC"
+            )?.use { c -> collectMessages(c, out) }
+        } catch (e: SecurityException) {
+            return emptyList()
+        }
         return out
     }
 
     fun messagesForAddress(address: String): List<SmsMessageRow> {
         val out = mutableListOf<SmsMessageRow>()
-        context.contentResolver.query(
-            smsUri,
-            arrayOf(
-                Telephony.Sms._ID,
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.DATE,
-                Telephony.Sms.TYPE
-            ),
-            "${Telephony.Sms.ADDRESS} = ?",
-            arrayOf(address),
-            "${Telephony.Sms.DATE} ASC"
-        )?.use { c -> collectMessages(c, out) }
+        try {
+            context.contentResolver.query(
+                smsUri,
+                arrayOf(
+                    Telephony.Sms._ID,
+                    Telephony.Sms.THREAD_ID,
+                    Telephony.Sms.ADDRESS,
+                    Telephony.Sms.BODY,
+                    Telephony.Sms.DATE,
+                    Telephony.Sms.TYPE
+                ),
+                "${Telephony.Sms.ADDRESS} = ?",
+                arrayOf(address),
+                "${Telephony.Sms.DATE} ASC"
+            )?.use { c -> collectMessages(c, out) }
+        } catch (e: SecurityException) {
+            return emptyList()
+        }
         return out
     }
 
@@ -98,7 +110,11 @@ class TelephonyRepository @Inject constructor(
             put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_INBOX)
             if (subscriptionId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subscriptionId)
         }
-        return context.contentResolver.insert(smsUri, values)
+        return try {
+            context.contentResolver.insert(smsUri, values)
+        } catch (e: SecurityException) {
+            null
+        }
     }
 
     fun writeOutgoing(address: String, body: String, timestamp: Long, subscriptionId: Int): Uri? {
@@ -111,7 +127,11 @@ class TelephonyRepository @Inject constructor(
             put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_SENT)
             if (subscriptionId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subscriptionId)
         }
-        return context.contentResolver.insert(smsUri, values)
+        return try {
+            context.contentResolver.insert(smsUri, values)
+        } catch (e: SecurityException) {
+            null
+        }
     }
 
     private fun collectThreads(c: Cursor, out: MutableList<ThreadSummary>) {

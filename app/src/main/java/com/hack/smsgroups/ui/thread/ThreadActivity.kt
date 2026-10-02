@@ -1,8 +1,11 @@
 package com.hack.smsgroups.ui.thread
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.hack.smsgroups.data.contacts.ContactResolver
 import com.hack.smsgroups.data.provider.TelephonyRepository
@@ -39,6 +42,9 @@ class ThreadActivity : AppCompatActivity() {
             val body = binding.composer.text?.toString().orEmpty().trim()
             if (body.isEmpty() || address.isEmpty()) return@setOnClickListener
             if (!DefaultRoleManager.isDefaultSmsApp(this)) return@setOnClickListener
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED
+            ) return@setOnClickListener
             val recipients = Recipients.of(address)
             smsSender.send(recipients, body, subId = -1)
             binding.composer.setText("")
